@@ -1,47 +1,47 @@
 package types
 
 // a linked list element inside PriceLevel
-type orderNode struct {
-	ord  Order
-	prev *orderNode
-	next *orderNode
+type OrderNode struct {
+	Ord  Order
+	Prev *OrderNode
+	Next *OrderNode
 }
 
 // doubly linked list
 // keep the sequence of resting orders in FIFO
 // ** not thread-safe **
 type PriceLevel struct {
-	head *orderNode
-	tail *orderNode
+	Head *OrderNode
+	Tail *OrderNode
 }
 
-func (p *PriceLevel) enquque(n *orderNode) {
-	if p.tail == nil {
-		p.head, p.tail = n, n
-		n.prev, n.next = nil, nil
+func (p *PriceLevel) Enqueue(n *OrderNode) {
+	if p.Tail == nil {
+		p.Head, p.Tail = n, n
+		n.Prev, n.Next = nil, nil
 		return
 	}
 
-	p.tail.next = n
-	n.prev = p.tail
-	n.next = nil
+	p.Tail.Next = n
+	n.Prev = p.Tail
+	n.Next = nil
 
-	p.tail = n
+	p.Tail = n
 }
 
-func (p *PriceLevel) dequeue() *orderNode {
-	if p.head == nil {
+func (p *PriceLevel) Dequeue() *OrderNode {
+	if p.Head == nil {
 		return nil
 	}
 
-	h := p.head
-	if h.next != nil {
-		h.next.prev = nil
-	}else{
-		p.tail = nil
+	h := p.Head
+	if h.Next != nil {
+		h.Next.Prev = nil
+	} else {
+		p.Tail = nil
 	}
 
-	p.head = h.next
-	h.next, h.prev = nil, nil
+	p.Head = h.Next
+	h.Next, h.Prev = nil, nil
 	return h
 }
