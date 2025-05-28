@@ -68,15 +68,16 @@ func (b *Book) ExecLimitPriceOrder(ord *types.Order) ([]types.Event, error) {
 			maker.Ord.Qnty -= minn
 			events = append(events, &types.TradeFillEvent{
 				ThisTrade: types.Trade{
-					TakerId: ord.Id,
-					MakerId: maker.Ord.Id,
-					Price:   b.priceOfIdx(b.bestAsk),
-					Qnty:    minn,
+					TakerId:      ord.Id,
+					MakerId:      maker.Ord.Id,
+					Price:        b.priceOfIdx(b.bestAsk),
+					Qnty:         minn,
+					InstrumentId: ord.InstrumentId,
 				},
 			})
 
 			if maker.Ord.Qnty == 0 {
-				events = append(events, &types.CancalEvent{OrderId: maker.Ord.Id})
+				events = append(events, &types.CancalEvent{OrderId: maker.Ord.Id, InstrumentId: ord.InstrumentId})
 				b.onPool.Put(maker)
 			} else {
 				lvl.Enqueue(maker)
@@ -96,13 +97,14 @@ func (b *Book) ExecLimitPriceOrder(ord *types.Order) ([]types.Event, error) {
 			remain -= qty
 			maker.Ord.Qnty -= qty
 			events = append(events, &types.TradeFillEvent{ThisTrade: types.Trade{
-				TakerId: ord.Id,
-				MakerId: maker.Ord.Id,
-				Price:   b.priceOfIdx(b.bestBid),
-				Qnty:    qty,
+				TakerId:      ord.Id,
+				MakerId:      maker.Ord.Id,
+				Price:        b.priceOfIdx(b.bestBid),
+				Qnty:         qty,
+				InstrumentId: ord.InstrumentId,
 			}})
 			if maker.Ord.Qnty == 0 {
-				events = append(events, &types.CancalEvent{OrderId: maker.Ord.Id})
+				events = append(events, &types.CancalEvent{OrderId: maker.Ord.Id, InstrumentId: ord.InstrumentId})
 				b.onPool.Put(maker)
 			} else {
 				lvl.Enqueue(maker)

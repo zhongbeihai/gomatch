@@ -29,11 +29,12 @@ type Order struct {
 
 // single fill between taker and maker
 type Trade struct {
-	TakerId int64
-	MakerId int64
-	Price   int64
-	Qnty    int64 // **Trade.Qnty <= Order.Qnty**, allow partial filling
-	Seq     int64 // filled after node successfully replicate to other nodes
+	TakerId      int64
+	MakerId      int64
+	Price        int64
+	Qnty         int64 // **Trade.Qnty <= Order.Qnty**, allow partial filling
+	Seq          int64 // filled after node successfully replicate to other nodes
+	InstrumentId string
 }
 
 // --------------------------- Event Polymorphism -----------------------------------
@@ -73,7 +74,8 @@ var _ Event = (*TradeFillEvent)(nil)
 // Cancal event represents order is fully removed from book
 type CancalEvent struct {
 	baseEvent
-	OrderId int64
+	OrderId      int64
+	InstrumentId string
 }
 
 func (c *CancalEvent) ExecType() ExecStatus { return ExecCancel }
