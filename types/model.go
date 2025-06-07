@@ -52,6 +52,7 @@ func (b *baseEvent) GetSeq() int64    { return b.seq }
 func (b *baseEvent) setSeq(seq int64) { b.seq = seq }
 
 // Order accept event
+// implement mode.Event
 type OrderAccpetEvent struct {
 	baseEvent
 	ThisOrder Order
@@ -62,6 +63,7 @@ func (o *OrderAccpetEvent) ExecType() ExecStatus { return ExecAccept }
 var _ Event = (*OrderAccpetEvent)(nil)
 
 // Trade fill event ()
+// implement mode.Event
 type TradeFillEvent struct {
 	baseEvent
 	ThisTrade Trade
@@ -72,6 +74,7 @@ func (t *TradeFillEvent) ExecType() ExecStatus { return ExecFill }
 var _ Event = (*TradeFillEvent)(nil)
 
 // Cancal event represents order is fully removed from book
+// implement mode.Event
 type CancalEvent struct {
 	baseEvent
 	OrderId      int64
