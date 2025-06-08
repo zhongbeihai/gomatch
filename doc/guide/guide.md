@@ -214,3 +214,59 @@ A fully functional matching node (Node) must both host a local matching engine (
 [engine.Apply()] + [publisher.Publish()]
 ```
 
+###
+```
+Client                Node(Leader)           Engine                Book                Raft
+  |                       |                    |                    |                   |
+  |---Order Request------->|                    |                    |                   |
+  |                       |                    |                    |                   |
+  |                handleConn                  |                    |                   |
+  |                       |---Submit---------->|                    |                   |
+  |                       |                    |---getChan--------->|                   |
+  |                       |                    |   (start worker)   |                   |
+  |                       |                    |---bookWorker------>|                   |
+  |                       |                    |   (order)          |                   |
+  |                       |                    |                    |---ExecLimitPriceOrder
+  |                       |                    |                    |   (match, gen events)
+  |                       |                    |<--events-----------|                   |
+  |                       |                    |---outCh----------->|                   |
+  |                       |                    |                    |                   |
+  |                       |<--ACK--------------|                    |                   |
+  |                       |                    |                    |                   |
+  |                proposeLoop                 |                    |                   |
+  |                       |---PollEvent------->|                    |                   |
+  |                       |<--batches----------|                    |                   |
+  |                       |---raft.Propose---->|                    |                   |
+  |                       |                    |                    |                   |
+  |                       |<--onRaftCommit-----|                    |                   |
+  |                       |---engine.Apply---->|                    |                   |
+  |                       |                    |---router.getBook-->|                   |
+  |                       |                    |                    |---Book.Apply------|
+  |                       |                    |                    |   (applyTrade/applyCancel)
+  |                       |                    |                    |                   |
+  |                       |---publisher.Publish|                    |                   |
+  |                       |                    |                    |                   |
+```
+
+### 3. node.ProposeLoop
+```
+proposeLoop
+   │
+   ├─> Triggered every PollTick
+   │
+   ├─> engine.PollEvent(timeout)
+   │      │
+   │      └─> Collect event batches from matching engine
+   │
+   ├─> raft.Propose(batch)
+   │      │
+   │      └─> Raft log replication (asynchronously)
+   │
+   ├─> onRaftCommit(batch)   <-- (callback registered via AddCommitListener)
+   │      │
+   │      ├─> engine.Apply(evt) for each event in batch
+   │      │
+   │      └─> publisher.Publish(batch)
+   │
+   └─> Wait for next tick or ctx.Done()
+```

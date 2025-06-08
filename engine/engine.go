@@ -93,17 +93,15 @@ func (e *Engine) PollEvent(timeout time.Duration) [][]types.Event {
 
 // Apply replays an event for follower mode.
 func (e *Engine) Apply(evt types.Event) {
-	// cast and route apply
-	switch ev := evt.(type) {
-	case *types.OrderAccpetEvent:
-		b := e.router.getBook(ev.ThisOrder.InstrumentId)
-		b.Apply(ev)
-	case *types.TradeFillEvent:
-		// similar, book state updated by trade and cancel events following
-		b := e.router.getBook("") // instr should be included in event if needed
-		b.Apply(ev)
-	case *types.CancalEvent:
-		b := e.router.getBook("")
-		b.Apply(ev)
-	}
+    switch ev := evt.(type) {
+    case *types.OrderAccpetEvent:
+        b := e.router.getBook(ev.ThisOrder.InstrumentId)
+        b.Apply(ev)
+    case *types.TradeFillEvent:
+        b := e.router.getBook(ev.ThisTrade.InstrumentId)
+        b.Apply(ev)
+    case *types.CancalEvent:
+        b := e.router.getBook(ev.InstrumentId)
+        b.Apply(ev)
+    }
 }

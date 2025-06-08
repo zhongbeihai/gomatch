@@ -195,10 +195,61 @@ func (b *Book) ensureBestPointers() {
 	}
 }
 
+// For follower replay: adjust order quantities; simplified implementation skips for brevity.
 func (b *Book) applyTrade(t *types.Trade) {
-	// For follower replay: adjust order quantities; simplified implementation skips for brevity.
+	// Find the maker order in the book and reduce its quantity by t.Qnty.
+    for _, lvl := range b.levels {
+        if lvl == nil || lvl.Head == nil {
+            continue
+        }
+        for node := lvl.Head; node != nil; node = node.Next {
+            if node.Ord.Id == t.MakerId {
+                node.Ord.Qnty -= t.Qnty
+                if node.Ord.Qnty <= 0 {
+                    // Remove node from the queue manually 、、
+                    // Unlink node from the doubly linked list
+                    if node.Prev != nil {
+                        node.Prev.Next = node.Next
+                    } else {
+                        lvl.Head = node.Next
+                    }
+                    if node.Next != nil {
+                        node.Next.Prev = node.Prev
+                    } else {
+                        lvl.Tail = node.Prev
+                    }
+                    b.onPool.Put(node)
+                }
+                break
+            }
+        }
+    }
+    b.ensureBestPointers()
 }
 
+// For follower replay: remove order id; simplified implementation skips.
 func (b *Book) applyCancel(id uint64) {
-	// For follower replay: remove order id; simplified implementation skips.
+	for _, lvl := range b.levels {
+        if lvl == nil || lvl.Head == nil {
+            continue
+        }
+        for node := lvl.Head; node != nil; node = node.Next {
+            if node.Ord.Id == int64(id) {
+                // Remove node from the doubly linked list
+                if node.Prev != nil {
+                    node.Prev.Next = node.Next
+                } else {
+                    lvl.Head = node.Next
+                }
+                if node.Next != nil {
+                    node.Next.Prev = node.Prev
+                } else {
+                    lvl.Tail = node.Prev
+                }
+                b.onPool.Put(node)
+                break
+            }
+        }
+    }
+    b.ensureBestPointers()
 }

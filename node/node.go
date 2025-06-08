@@ -139,6 +139,7 @@ func (n *Node) handleConn(c net.Conn) {
 	}
 }
 
+// see sequence diagram on `doc/guide/guide_md/proposeLoop()`
 func (n *Node) proposeLoop() {
 	defer n.wg.Done()
 
@@ -151,6 +152,7 @@ func (n *Node) proposeLoop() {
 			return
 		case <- ticker.C:
 			if !n.raft.IsLeader() {continue}
+			
 			batches := n.engine.PollEvent(n.opts.PollTick)
 			for _, batch := range batches{
 				if err := n.raft.Propose(n.ctx, batch); err != nil{
